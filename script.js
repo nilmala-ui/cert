@@ -214,34 +214,32 @@ document.addEventListener('DOMContentLoaded', () => {
         const fileName = `Certifikate_${participantName}.${format}`;
 
         try {
+            await document.fonts.ready; // CRITICAL: Forces flexbox container to wait for web fonts before SVG mapping
             const exportScale = window.innerWidth <= 768 ? 1.5 : 2;
-
-            const html2canvasOpts = {
-                scale: exportScale,
-                useCORS: false, // Strict OFF: Blocks webkit from trying to proxy remote data that taints canvas
-                allowTaint: false,
-                logging: false,
-                backgroundColor: '#ffffff'
-            };
-
+            
             let dataUrl;
+            const options = {
+                pixelRatio: exportScale,
+                backgroundColor: '#ffffff',
+                style: {
+                    transform: 'none',
+                    margin: '0',
+                }
+            };
+            
+            if (format === 'png') {
+                dataUrl = await htmlToImage.toPng(certContainer, options);
+            } else {
+                dataUrl = await htmlToImage.toJpeg(certContainer, { ...options, quality: 0.98 });
+            }
 
             if (format === 'pdf') {
-                const opt = {
-                    margin: 0,
-                    filename: fileName,
-                    image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: html2canvasOpts,
-                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
-                };
-                await html2pdf().set(opt).from(certContainer).save();
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('landscape', 'mm', 'a4');
+                pdf.addImage(dataUrl, 'JPEG', 0, 0, 297, 210);
+                pdf.save(fileName);
             } 
             else if (format === 'png' || format === 'jpg') {
-                const canvas = await html2canvas(certContainer, html2canvasOpts);
-                const mimeType = format === 'jpg' ? 'image/jpeg' : 'image/png';
-                dataUrl = canvas.toDataURL(mimeType, 1.0); // Safely extracts generated texture
-                
-                // Native iOS/Safari fallback modal
                 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
                 if (isIOS) {
                     const modal = document.createElement('div');
@@ -273,7 +271,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             console.error("Gabim gjatë eksportimit:", error);
-            alert("Gabim gjatë gjenerimit:\n" + (error.message || error) + "\n\nProvoni të rifreskoni faqen ose përdorni një kompjuter.");
+            let msg = error.message || error;
+            if (error instanceof Event || msg.toString().includes('[object Event]')) {
+                msg = "Network fetch error (Fontet u refuzuan nga Safari. Provoni të rifreskoni faqen).";
+            }
+            alert("Gabim gjatë gjenerimit:\n" + msg);
         } finally {
             certContainer.classList.remove('printing');
             editables.forEach(el => el.setAttribute('contenteditable', 'true'));
