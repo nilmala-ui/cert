@@ -181,6 +181,29 @@ document.addEventListener('DOMContentLoaded', () => {
         scaleWrapper.style.marginBottom = '0';
         certContainer.classList.add('printing');
 
+        // --- SURGERY START: Prevent Safari Taint Bugs ---
+        // 1. Physically remove empty images from DOM (Safari Taint trigger #1)
+        const logoElement = document.getElementById('cert-logo');
+        const logoParent = logoElement.parentElement;
+        const logoNext = logoElement.nextSibling;
+        let removedLogo = false;
+        
+        if (!logoElement.getAttribute('src') || logoElement.getAttribute('src') === '') {
+            logoParent.removeChild(logoElement);
+            removedLogo = true;
+        }
+        
+        // 2. Temporarily detach external CDN stylesheets causing CSSOM Taint (Safari Taint trigger #2)
+        const remixLink = document.querySelector('link[href*="remixicon"]');
+        const remixParent = remixLink ? remixLink.parentNode : null;
+        let removedRemix = false;
+        
+        if (remixLink && remixParent) {
+            remixParent.removeChild(remixLink);
+            removedRemix = true;
+        }
+        // --- SURGERY END ---
+
         // Give DOM multiple frames to completely settle layout thrashing on iOS
         await new Promise(requestAnimationFrame);
         await new Promise(requestAnimationFrame);
@@ -195,15 +218,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const html2canvasOpts = {
                 scale: exportScale,
-                useCORS: true,
+                useCORS: false, // Strict OFF: Blocks webkit from trying to proxy remote data that taints canvas
                 allowTaint: false,
                 logging: false,
-                backgroundColor: '#ffffff',
-                windowWidth: 1200,
-                windowHeight: 800,
-                ignoreElements: (node) => {
-                    return node.tagName === 'IMG' && (!node.getAttribute('src') || node.getAttribute('src') === '');
-                }
+                backgroundColor: '#ffffff'
             };
 
             let dataUrl;
@@ -221,7 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
             else if (format === 'png' || format === 'jpg') {
                 const canvas = await html2canvas(certContainer, html2canvasOpts);
                 const mimeType = format === 'jpg' ? 'image/jpeg' : 'image/png';
-                dataUrl = canvas.toDataURL(mimeType, 1.0);
+                dataUrl = canvas.toDataURL(mimeType, 1.0); // Safely extracts generated texture
                 
                 // Native iOS/Safari fallback modal
                 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
@@ -259,6 +277,15 @@ document.addEventListener('DOMContentLoaded', () => {
         } finally {
             certContainer.classList.remove('printing');
             editables.forEach(el => el.setAttribute('contenteditable', 'true'));
+            
+            // --- RESTORE SURGERY ---
+            if (removedLogo && logoParent) {
+                logoParent.insertBefore(logoElement, logoNext);
+            }
+            if (removedRemix && remixParent) {
+                remixParent.appendChild(remixLink);
+            }
+            // -----------------------
             
             scaleWrapper.style.transform = originalTransform; 
             scaleWrapper.style.marginBottom = originalMargin;
