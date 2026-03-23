@@ -198,7 +198,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const options = {
                 pixelRatio: exportScale,
                 backgroundColor: '#ffffff',
-                cacheBust: true, // Guarantees fresh asset loads bypassing WebKit caches
+                filter: (node) => {
+                    // Prevent DOM exceptions when html-to-image fetches empty images
+                    if (node.tagName === 'IMG' && !node.getAttribute('src')) {
+                        return false;
+                    }
+                    return true;
+                },
                 style: {
                     transform: 'none',
                     margin: '0'
@@ -252,7 +258,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             console.error("Gabim gjatë eksportimit:", error);
-            alert("Gabim gjatë gjenerimit:\n" + (error.message || error) + "\n\nProvoni të rifreskoni faqen ose përdorni një kompjuter.");
+            let msg = error.message || error;
+            if (error instanceof Event || msg.toString().includes('[object Event]')) {
+                msg = "Network fetch error (Fontet ose Imazhet u refuzuan nga Safari. Ju lutemi ri-hapni plotësisht faqen).";
+            }
+            alert("Gabim gjatë gjenerimit:\n" + msg);
         } finally {
             certContainer.classList.remove('printing');
             editables.forEach(el => el.setAttribute('contenteditable', 'true'));
