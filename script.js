@@ -86,15 +86,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 2. Pattern Selectors
     const patternBtns = document.querySelectorAll('.pattern-btn');
+    // Encode SVGs natively as Base64 to prevent iOS Safari html2canvas crashing
+    const btoaSafe = str => btoa(unescape(encodeURIComponent(str)));
+    
     const patterns = {
-        '1': `url('data:image/svg+xml;charset=utf-8,${encodeURIComponent('<svg width="80" height="80" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><g stroke="#000" stroke-width="1.2" stroke-opacity="0.06" fill="none"><path d="M24 0 L56 0 L80 24 L80 56 L56 80 L24 80 L0 56 L0 24 Z"/><path d="M28 8 L52 8 L72 28 L72 52 L52 72 L28 72 L8 52 L8 28 Z"/></g></svg>')}')`,
-        '2': `url('data:image/svg+xml;charset=utf-8,${encodeURIComponent('<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><g stroke="#000" stroke-width="1.2" stroke-opacity="0.05" fill="none"><rect x="22" y="22" width="56" height="56" transform="rotate(45 50 50)"/><rect x="22" y="22" width="56" height="56"/></g></svg>')}')`,
-        '3': `url('data:image/svg+xml;charset=utf-8,${encodeURIComponent('<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><g stroke="#000" stroke-width="1.5" stroke-opacity="0.05" fill="none"><path d="M30 0 L60 30 L30 60 L0 30 Z" /><path d="M15 15 L45 15 L45 45 L15 45 Z" /></g></svg>')}')`,
-        '4': `url('data:image/svg+xml;charset=utf-8,${encodeURIComponent('<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="#000" stroke-opacity="0.06" stroke-width="1.5"><path d="M0 30 Q15 15 30 30 T60 30"/><path d="M0 30 Q15 45 30 30 T60 30"/><path d="M30 0 Q45 15 30 30 T30 60"/><path d="M30 0 Q15 15 30 30 T30 60"/></g></svg>')}')`,
-        '5': `url('data:image/svg+xml;charset=utf-8,${encodeURIComponent('<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><g fill="#000" fill-opacity="0.03"><path d="M30 0l30 30-30 30L0 30z"/></g></svg>')}')`,
-        '6': `url('data:image/svg+xml;charset=utf-8,${encodeURIComponent('<svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><path d="M15 0h10v15h15v10h-15v15h-10v-15h-15v-10h15z" stroke="#000" stroke-width="1.5" stroke-opacity="0.05" fill="none"/></svg>')}')`,
-        '7': `url('data:image/svg+xml;charset=utf-8,${encodeURIComponent('<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><g stroke="#000" stroke-width="1.2" stroke-opacity="0.06" fill="none"><circle cx="30" cy="30" r="20"/><circle cx="0" cy="0" r="20"/><circle cx="60" cy="0" r="20"/><circle cx="0" cy="60" r="20"/><circle cx="60" cy="60" r="20"/></g></svg>')}')`,
-        '8': `url('data:image/svg+xml;charset=utf-8,${encodeURIComponent('<svg width="56" height="98" viewBox="0 0 56 98" xmlns="http://www.w3.org/2000/svg"><g stroke="#000" stroke-width="1.2" stroke-opacity="0.06" fill="none"><path d="M28 16L0 0l0 32.7l28 16.3l28-16.3L56 0zM0 65.3l28 16.3l28-16.3l0-32.6l-28-16.3L0 32.7zM28 81.6l0 16.4M28 16.3l0-16.3"/></g></svg>')}')`,
+        '1': `url('data:image/svg+xml;base64,${btoaSafe('<svg width="80" height="80" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><g stroke="#000" stroke-width="1.2" stroke-opacity="0.06" fill="none"><path d="M24 0 L56 0 L80 24 L80 56 L56 80 L24 80 L0 56 L0 24 Z"/><path d="M28 8 L52 8 L72 28 L72 52 L52 72 L28 72 L8 52 L8 28 Z"/></g></svg>')}')`,
+        '2': `url('data:image/svg+xml;base64,${btoaSafe('<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><g stroke="#000" stroke-width="1.2" stroke-opacity="0.05" fill="none"><rect x="22" y="22" width="56" height="56" transform="rotate(45 50 50)"/><rect x="22" y="22" width="56" height="56"/></g></svg>')}')`,
+        '3': `url('data:image/svg+xml;base64,${btoaSafe('<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><g stroke="#000" stroke-width="1.5" stroke-opacity="0.05" fill="none"><path d="M30 0 L60 30 L30 60 L0 30 Z" /><path d="M15 15 L45 15 L45 45 L15 45 Z" /></g></svg>')}')`,
+        '4': `url('data:image/svg+xml;base64,${btoaSafe('<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="#000" stroke-opacity="0.06" stroke-width="1.5"><path d="M0 30 Q15 15 30 30 T60 30"/><path d="M0 30 Q15 45 30 30 T60 30"/><path d="M30 0 Q45 15 30 30 T30 60"/><path d="M30 0 Q15 15 30 30 T30 60"/></g></svg>')}')`,
+        '5': `url('data:image/svg+xml;base64,${btoaSafe('<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><g fill="#000" fill-opacity="0.03"><path d="M30 0l30 30-30 30L0 30z"/></g></svg>')}')`,
+        '6': `url('data:image/svg+xml;base64,${btoaSafe('<svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><path d="M15 0h10v15h15v10h-15v15h-10v-15h-15v-10h15z" stroke="#000" stroke-width="1.5" stroke-opacity="0.05" fill="none"/></svg>')}')`,
+        '7': `url('data:image/svg+xml;base64,${btoaSafe('<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><g stroke="#000" stroke-width="1.2" stroke-opacity="0.06" fill="none"><circle cx="30" cy="30" r="20"/><circle cx="0" cy="0" r="20"/><circle cx="60" cy="0" r="20"/><circle cx="0" cy="60" r="20"/><circle cx="60" cy="60" r="20"/></g></svg>')}')`,
+        '8': `url('data:image/svg+xml;base64,${btoaSafe('<svg width="56" height="98" viewBox="0 0 56 98" xmlns="http://www.w3.org/2000/svg"><g stroke="#000" stroke-width="1.2" stroke-opacity="0.06" fill="none"><path d="M28 16L0 0l0 32.7l28 16.3l28-16.3L56 0zM0 65.3l28 16.3l28-16.3l0-32.6l-28-16.3L0 32.7zM28 81.6l0 16.4M28 16.3l0-16.3"/></g></svg>')}')`,
         'none': 'none'
     };
 
@@ -179,13 +182,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const fileName = `Certifikate_${participantName}.${format}`;
 
         try {
+            const exportScale = window.innerWidth <= 768 ? 1.5 : 2;
+
             if (format === 'pdf') {
                 const opt = {
                     margin: 0,
                     filename: fileName,
                     image: { type: 'jpeg', quality: 0.98 },
                     html2canvas: { 
-                        scale: 2, 
+                        scale: exportScale, 
                         useCORS: true, 
                         logging: false,
                         windowWidth: 1200, 
@@ -197,7 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } 
             else if (format === 'png' || format === 'jpg') {
                 const canvas = await html2canvas(certContainer, { 
-                    scale: 2, // Reduced from 3 to prevent iOS memory limit crashes
+                    scale: exportScale, 
                     useCORS: true, 
                     logging: false,
                     backgroundColor: '#ffffff'

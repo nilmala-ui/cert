@@ -338,7 +338,8 @@ input[type="file"] { display: none; }
 
 .inner-border {
     border: 1.5px solid var(--accent-color);
-    box-shadow: inset 0 0 0 6px var(--cert-bg), inset 0 0 0 8px var(--accent-color);
+    outline: 1.5px solid var(--accent-color);
+    outline-offset: -8px;
     width: 100%;
     height: 100%;
     padding: 14mm 18mm;
