@@ -124,7 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     removeLogoBtn.addEventListener('click', () => {
-        certLogo.src = '';
+        certLogo.removeAttribute('src');
         certLogo.style.display = 'none';
         removeLogoBtn.style.display = 'none';
         logoUpload.value = ''; // reset input
@@ -193,29 +193,31 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const exportScale = window.innerWidth <= 768 ? 1.5 : 2;
 
+            const html2canvasOpts = {
+                scale: exportScale,
+                useCORS: true,
+                allowTaint: false,
+                logging: false,
+                backgroundColor: '#ffffff',
+                windowWidth: 1200,
+                windowHeight: 800,
+                ignoreElements: (node) => {
+                    return node.tagName === 'IMG' && (!node.getAttribute('src') || node.getAttribute('src') === '');
+                }
+            };
+
             if (format === 'pdf') {
                 const opt = {
                     margin: 0,
                     filename: fileName,
                     image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { 
-                        scale: exportScale, 
-                        useCORS: true, 
-                        logging: false,
-                        windowWidth: 1200, 
-                        windowHeight: 800
-                    },
+                    html2canvas: html2canvasOpts,
                     jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
                 };
                 await html2pdf().set(opt).from(certContainer).save();
             } 
             else if (format === 'png' || format === 'jpg') {
-                const canvas = await html2canvas(certContainer, { 
-                    scale: exportScale, 
-                    useCORS: true, 
-                    logging: false,
-                    backgroundColor: '#ffffff'
-                });
+                const canvas = await html2canvas(certContainer, html2canvasOpts);
                 const mimeType = format === 'jpg' ? 'image/jpeg' : 'image/png';
                 const dataUrl = canvas.toDataURL(mimeType, 1.0);
                 
