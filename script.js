@@ -163,10 +163,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         btnElement.classList.add('loading');
         
+        // Prevent scroll offset bugs in html2canvas
+        window.scrollTo(0, 0);
+
         // Cache original states
         const originalTransform = scaleWrapper.style.transform;
         const originalMargin = scaleWrapper.style.marginBottom;
         const originalTransition = scaleWrapper.style.transition;
+        
+        // Disable editables before capture to prevent Safari text-selection cursor crashes
+        const editables = certContainer.querySelectorAll('[contenteditable="true"]');
+        editables.forEach(el => el.setAttribute('contenteditable', 'false'));
         
         // Force layout reset without animating 
         scaleWrapper.style.transition = 'none';
@@ -174,8 +181,10 @@ document.addEventListener('DOMContentLoaded', () => {
         scaleWrapper.style.marginBottom = '0';
         certContainer.classList.add('printing');
 
-        // Wait a tiny bit for DOM paint
-        await new Promise(r => setTimeout(r, 100)); 
+        // Give DOM multiple frames to completely settle layout thrashing on iOS
+        await new Promise(requestAnimationFrame);
+        await new Promise(requestAnimationFrame);
+        await new Promise(r => setTimeout(r, 150)); 
 
         participantName = participantName.replace(/\s+/g, '_');
         if (participantName === "") participantName = "Pjesemarresi";
@@ -207,21 +216,49 @@ document.addEventListener('DOMContentLoaded', () => {
                     logging: false,
                     backgroundColor: '#ffffff'
                 });
-                const link = document.createElement('a');
-                link.download = fileName;
                 const mimeType = format === 'jpg' ? 'image/jpeg' : 'image/png';
-                link.href = canvas.toDataURL(mimeType, 1.0);
-                link.click();
+                const dataUrl = canvas.toDataURL(mimeType, 1.0);
+                
+                // Native iOS/Safari blocks programmatic downloads sometimes
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                if (isIOS) {
+                    const modal = document.createElement('div');
+                    modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;';
+                    
+                    const hint = document.createElement('h3');
+                    hint.innerText = 'Mbaj shtypur mbi foto për ta ruajtur';
+                    hint.style.cssText = 'color:#fff;margin-bottom:20px;text-align:center;font-family:Inter,sans-serif;font-size:16px;';
+                    
+                    const img = new Image();
+                    img.src = dataUrl;
+                    img.style.cssText = 'max-width:100%;max-height:70vh;border-radius:8px;box-shadow:0 10px 30px rgba(0,0,0,0.5);';
+                    
+                    const closeBtn = document.createElement('button');
+                    closeBtn.innerText = 'Mbyll';
+                    closeBtn.style.cssText = 'margin-top:30px;padding:12px 30px;background:#ef4444;color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:bold;cursor:pointer;';
+                    closeBtn.onclick = () => document.body.removeChild(modal);
+                    
+                    modal.appendChild(hint);
+                    modal.appendChild(img);
+                    modal.appendChild(closeBtn);
+                    document.body.appendChild(modal);
+                } else {
+                    const link = document.createElement('a');
+                    link.download = fileName;
+                    link.href = dataUrl;
+                    link.click();
+                }
             }
         } catch (error) {
             console.error("Gabim gjatë eksportimit:", error);
-            alert("Ndodhi një problem gjatë shkarkimit. Ju lutem sigurohuni që pajisja juaj ka memorie të mjaftueshme ose provoni një shfletues tjetër.");
+            alert("Gabim gjatë gjenerimit:\n" + (error.message || error) + "\n\nProvoni të rifreskoni faqen ose përdorni një kompjuter.");
         } finally {
             certContainer.classList.remove('printing');
+            editables.forEach(el => el.setAttribute('contenteditable', 'true'));
+            
             scaleWrapper.style.transform = originalTransform; 
             scaleWrapper.style.marginBottom = originalMargin;
             
-            // Restore smooth transition after a tiny delay so the snapback isn't jittery
             setTimeout(() => {
                 scaleWrapper.style.transition = originalTransition;
             }, 50);
