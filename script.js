@@ -192,37 +192,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             const exportScale = window.innerWidth <= 768 ? 1.5 : 2;
-
-            const html2canvasOpts = {
-                scale: exportScale,
-                useCORS: true,
-                allowTaint: false,
-                logging: false,
+            
+            // Using modern html-to-image library to completely bypass iOS Canvas Taint and Layout Bugs
+            let dataUrl;
+            const options = {
+                pixelRatio: exportScale,
                 backgroundColor: '#ffffff',
-                windowWidth: 1200,
-                windowHeight: 800,
-                ignoreElements: (node) => {
-                    return node.tagName === 'IMG' && (!node.getAttribute('src') || node.getAttribute('src') === '');
+                cacheBust: true, // Guarantees fresh asset loads bypassing WebKit caches
+                style: {
+                    transform: 'none',
+                    margin: '0'
                 }
             };
+            
+            if (format === 'png') {
+                dataUrl = await htmlToImage.toPng(certContainer, options);
+            } else {
+                dataUrl = await htmlToImage.toJpeg(certContainer, { ...options, quality: 0.98 });
+            }
 
             if (format === 'pdf') {
-                const opt = {
-                    margin: 0,
-                    filename: fileName,
-                    image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: html2canvasOpts,
-                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
-                };
-                await html2pdf().set(opt).from(certContainer).save();
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('landscape', 'mm', 'a4');
+                // A4 landscape is exactly 297mm x 210mm
+                pdf.addImage(dataUrl, 'JPEG', 0, 0, 297, 210);
+                pdf.save(fileName);
             } 
             else if (format === 'png' || format === 'jpg') {
-                const canvas = await html2canvas(certContainer, html2canvasOpts);
-                const mimeType = format === 'jpg' ? 'image/jpeg' : 'image/png';
-                const dataUrl = canvas.toDataURL(mimeType, 1.0);
-                
-                // Native iOS/Safari blocks programmatic downloads sometimes
+                // Native iOS/Safari fallback to prevent direct programmatic download blocking
                 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                
                 if (isIOS) {
                     const modal = document.createElement('div');
                     modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;';
