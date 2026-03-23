@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gjenerator i Certifikatave Pro</title>
+    
+    <!-- Modern Tech Fonts for UI, Elegant Fonts for Certificate -->
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Montserrat:ital,wght@0,300;0,400;0,600;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- External Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <!-- Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- App Layout Container -->
+    <div class="app-layout">
+        
+        <!-- Sidebar Control Panel -->
+        <aside class="control-panel">
+            <div class="panel-header">
+                <i class="ri-award-fill header-icon"></i>
+                <h2>CertGenerator <span>Pro</span></h2>
+            </div>
+
+            <div class="controls-wrapper">
+                
+                <!-- Customization Section -->
+                <div class="control-section">
+                    <h3><i class="ri-palette-line"></i> Personalizimi</h3>
+                    
+                    <div class="input-group">
+                        <label for="theme-color">Ngjyra e Theksit</label>
+                        <div class="color-picker-wrapper">
+                            <input type="color" id="theme-color" value="#D4AF37">
+                            <span class="color-value" id="theme-color-value">#D4AF37</span>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Modeli i Sfondit (Pattern)</label>
+                        <div class="pattern-selector">
+                            <button class="pattern-btn active" data-pattern="1">1</button>
+                            <button class="pattern-btn" data-pattern="2">2</button>
+                            <button class="pattern-btn" data-pattern="3">3</button>
+                            <button class="pattern-btn" data-pattern="4">4</button>
+                            <button class="pattern-btn" data-pattern="5">5</button>
+                            <button class="pattern-btn" data-pattern="6">6</button>
+                            <button class="pattern-btn" data-pattern="7">7</button>
+                            <button class="pattern-btn" data-pattern="8">8</button>
+                            <button class="pattern-btn" data-pattern="none" title="Asnjë"><i class="ri-forbid-line"></i></button>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Përshtate me Logon e Institucionit</label>
+                        <label class="btn btn-upload">
+                            <input type="file" id="logo-upload" accept="image/*">
+                            <i class="ri-upload-cloud-2-line"></i> Ngarko Logon
+                        </label>
+                        <button class="btn btn-danger btn-sm" id="remove-logo" style="display: none; margin-top: 10px;">
+                            <i class="ri-delete-bin-line"></i> Hiqe Logon
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Action Section -->
+                <div class="control-section">
+                    <h3><i class="ri-download-cloud-line"></i> Eksporto</h3>
+                    <p class="section-desc">Pasi të plotësoni të dhënat drejtpërdrejt në certifikatë, shkarkojeni atë.</p>
+                    
+                    <button class="btn btn-primary btn-block" id="export-pdf">
+                        <i class="ri-file-pdf-line"></i> <span>Shkarko PDF</span>
+                        <div class="loader"></div>
+                    </button>
+                    <div class="button-row">
+                        <button class="btn btn-outline" id="export-png">
+                            <i class="ri-image-line"></i> <span>PNG</span>
+                            <div class="loader"></div>
+                        </button>
+                        <button class="btn btn-outline" id="export-jpg">
+                            <i class="ri-image-fill"></i> <span>JPG</span>
+                            <div class="loader"></div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Utility Section -->
+                <div class="control-section util-section">
+                    <button class="btn btn-text btn-block" id="reset-btn">
+                        <i class="ri-restart-line"></i> Kthe në Parazgjedhje
+                    </button>
+                </div>
+
+                <div class="creator-tag">
+                    Krijuar nga <span style="font-family: 'Amiri', serif; font-size: 1.4em; font-weight: normal; margin-left: 4px;">نيل مالا</span>
+                </div>
+
+            </div>
+        </aside>
+
+        <!-- Main Workspace Viewport -->
+        <main class="workspace">
+            <!-- Background Decoration -->
+            <div class="bg-blur-circle circle-1"></div>
+            <div class="bg-blur-circle circle-2"></div>
+            
+            <div class="worksace-header">
+                <span class="pulse-dot"></span> <p>Preview i drejtpërdrejtë — <em>Kliko në tekst për ta ndryshuar</em></p>
+            </div>
+
+            <div class="scale-wrapper" id="wrapper">
+                <!-- Certificate HTML structure kept similar but classed for better styling -->
+                <div id="certificate-container" class="certificate-container">
+                    <div class="certificate-border inner-border">
+                        
+                        <!-- Top Area -->
+                        <div class="cert-header">
+                            <div class="logo-area"><img id="cert-logo" src="" alt="Logo"></div>
+                            <div class="motif" id="c-motif">✧ ﷽ ✧</div>
+                            <div class="title" id="c-title" contenteditable="true" spellcheck="false">Çertifikatë Pjesëmarrjeje</div>
+                            <div class="subtitle" id="c-subtitle" contenteditable="true" spellcheck="false">Përfundimi i Nivelit të Parë</div>
+                        </div>
+
+                        <!-- Middle Area -->
+                        <div class="cert-body">
+                            <p class="text-body" id="c-text1" contenteditable="true" spellcheck="false">Kjo çertifikatë i jepet</p>
+                            <div class="name-wrapper">
+                                <span class="name-placeholder" id="c-name" contenteditable="true" spellcheck="false">Emri i Pjesëmarrësit</span>
+                            </div>
+                            <p class="text-body" id="c-text2" contenteditable="true" spellcheck="false">për pjesëmarrjen në nivelin e parë të serisë së ligjëratave:</p>
+                            
+                            <div class="course-title" id="c-course" contenteditable="true" spellcheck="false">“Fikhu i Adhurimeve”</div>
+                            <div class="instructor" id="c-instructor" contenteditable="true" spellcheck="false">Ligjëruar nga Hoxhë Dr. Rasim Haxha</div>
+                        </div>
+
+                        <!-- Footer Area -->
+                        <div class="cert-footer">
+                            <div class="signature-block">
+                                <div class="dynamic-line" id="c-date" contenteditable="true" spellcheck="false">23 Mars 2026</div>
+                                <div class="signature-text" id="c-date-lbl" contenteditable="true" spellcheck="false">Data</div>
+                            </div>
+                            
+                            <div class="seal" id="c-seal" contenteditable="true" spellcheck="false">
+                                <div class="seal-inner">Vula</div>
+                            </div>
+                            
+                            <div class="signature-block">
+                                <div class="dynamic-line cursive-sign" id="c-sign" contenteditable="true" spellcheck="false"></div>
+                                <div class="signature-text" id="c-sign-lbl" contenteditable="true" spellcheck="false">Nënshkrimi</div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
