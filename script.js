@@ -152,28 +152,27 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Export Engine ---
 
     async function exportCertificate(format, btnElement) {
-        // Validation check for empty name (UX improvement)
         let participantName = document.getElementById('c-name').innerText.trim();
         if (participantName === "" || participantName.includes("Emri i Pjesëmarrësit")) {
             const proceed = confirm("Emri i pjesëmarrësit nuk është ndryshuar ende. Doni të vazhdoni?");
             if(!proceed) return;
         }
 
-        // Set Button to Loading State
         btnElement.classList.add('loading');
         
-        // Pre-export cleanup
-        // Remove scale transform temporarily for clear export resolution
+        // Cache original states
         const originalTransform = scaleWrapper.style.transform;
+        const originalMargin = scaleWrapper.style.marginBottom;
+        const originalTransition = scaleWrapper.style.transition;
         
-        // Ensure standard width handling
-        const originalWidth = appLayout.style.width;
-        
+        // Force layout reset without animating 
+        scaleWrapper.style.transition = 'none';
         scaleWrapper.style.transform = 'none';
+        scaleWrapper.style.marginBottom = '0';
         certContainer.classList.add('printing');
 
-        // Give DOM a frame to update CSS without transitions
-        await new Promise(r => setTimeout(r, 150)); 
+        // Wait a tiny bit for DOM paint
+        await new Promise(r => setTimeout(r, 100)); 
 
         participantName = participantName.replace(/\s+/g, '_');
         if (participantName === "") participantName = "Pjesemarresi";
@@ -186,7 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     filename: fileName,
                     image: { type: 'jpeg', quality: 0.98 },
                     html2canvas: { 
-                        scale: 2, // good compromise between detail and size
+                        scale: 2, 
                         useCORS: true, 
                         logging: false,
                         windowWidth: 1200, 
@@ -198,7 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } 
             else if (format === 'png' || format === 'jpg') {
                 const canvas = await html2canvas(certContainer, { 
-                    scale: 3, // Highres for image export
+                    scale: 2, // Reduced from 3 to prevent iOS memory limit crashes
                     useCORS: true, 
                     logging: false,
                     backgroundColor: '#ffffff'
@@ -213,9 +212,15 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error("Gabim gjatë eksportimit:", error);
             alert("Ndodhi një problem gjatë shkarkimit. Ju lutem sigurohuni që pajisja juaj ka memorie të mjaftueshme ose provoni një shfletues tjetër.");
         } finally {
-            // Restore UI States immediately
             certContainer.classList.remove('printing');
             scaleWrapper.style.transform = originalTransform; 
+            scaleWrapper.style.marginBottom = originalMargin;
+            
+            // Restore smooth transition after a tiny delay so the snapback isn't jittery
+            setTimeout(() => {
+                scaleWrapper.style.transition = originalTransition;
+            }, 50);
+            
             btnElement.classList.remove('loading');
         }
     }
