@@ -181,29 +181,6 @@ document.addEventListener('DOMContentLoaded', () => {
         scaleWrapper.style.marginBottom = '0';
         certContainer.classList.add('printing');
 
-        // --- SURGERY START: Prevent Safari Taint Bugs ---
-        // 1. Physically remove empty images from DOM (Safari Taint trigger #1)
-        const logoElement = document.getElementById('cert-logo');
-        const logoParent = logoElement.parentElement;
-        const logoNext = logoElement.nextSibling;
-        let removedLogo = false;
-        
-        if (!logoElement.getAttribute('src') || logoElement.getAttribute('src') === '') {
-            logoParent.removeChild(logoElement);
-            removedLogo = true;
-        }
-        
-        // 2. Temporarily detach external CDN stylesheets causing CSSOM Taint (Safari Taint trigger #2)
-        const remixLink = document.querySelector('link[href*="remixicon"]');
-        const remixParent = remixLink ? remixLink.parentNode : null;
-        let removedRemix = false;
-        
-        if (remixLink && remixParent) {
-            remixParent.removeChild(remixLink);
-            removedRemix = true;
-        }
-        // --- SURGERY END ---
-
         // Give DOM multiple frames to completely settle layout thrashing on iOS
         await new Promise(requestAnimationFrame);
         await new Promise(requestAnimationFrame);
@@ -214,23 +191,23 @@ document.addEventListener('DOMContentLoaded', () => {
         const fileName = `Certifikate_${participantName}.${format}`;
 
         try {
-            await document.fonts.ready; // CRITICAL: Forces flexbox container to wait for web fonts before SVG mapping
+            await document.fonts.ready; // CRITICAL: Forces flexbox container to wait for web fonts
             const exportScale = window.innerWidth <= 768 ? 1.5 : 2;
             
-            let dataUrl;
             const options = {
-                pixelRatio: exportScale,
+                scale: exportScale,
                 backgroundColor: '#ffffff',
-                style: {
-                    transform: 'none',
-                    margin: '0',
-                }
+                useCORS: true,
+                allowTaint: false
             };
             
+            const canvas = await html2canvas(certContainer, options);
+            let dataUrl;
+            
             if (format === 'png') {
-                dataUrl = await htmlToImage.toPng(certContainer, options);
+                dataUrl = canvas.toDataURL('image/png');
             } else {
-                dataUrl = await htmlToImage.toJpeg(certContainer, { ...options, quality: 0.98 });
+                dataUrl = canvas.toDataURL('image/jpeg', 0.98);
             }
 
             if (format === 'pdf') {
@@ -263,31 +240,33 @@ document.addEventListener('DOMContentLoaded', () => {
                     modal.appendChild(closeBtn);
                     document.body.appendChild(modal);
                 } else {
+                    // Blob download to prevent Android Base64 URL length limits
+                    const arr = dataUrl.split(',');
+                    const mime = arr[0].match(/:(.*?);/)[1];
+                    const bstr = atob(arr[1]);
+                    let n = bstr.length;
+                    const u8arr = new Uint8Array(n);
+                    while(n--) {
+                        u8arr[n] = bstr.charCodeAt(n);
+                    }
+                    const blob = new Blob([u8arr], {type: mime});
+                    const url = URL.createObjectURL(blob);
+                    
                     const link = document.createElement('a');
                     link.download = fileName;
-                    link.href = dataUrl;
+                    link.href = url;
+                    document.body.appendChild(link);
                     link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
                 }
             }
         } catch (error) {
             console.error("Gabim gjatë eksportimit:", error);
-            let msg = error.message || error;
-            if (error instanceof Event || msg.toString().includes('[object Event]')) {
-                msg = "Network fetch error (Fontet u refuzuan nga Safari. Provoni të rifreskoni faqen).";
-            }
-            alert("Gabim gjatë gjenerimit:\n" + msg);
+            alert("Gabim gjatë gjenerimit:\n" + (error.message || error));
         } finally {
             certContainer.classList.remove('printing');
             editables.forEach(el => el.setAttribute('contenteditable', 'true'));
-            
-            // --- RESTORE SURGERY ---
-            if (removedLogo && logoParent) {
-                logoParent.insertBefore(logoElement, logoNext);
-            }
-            if (removedRemix && remixParent) {
-                remixParent.appendChild(remixLink);
-            }
-            // -----------------------
             
             scaleWrapper.style.transform = originalTransform; 
             scaleWrapper.style.marginBottom = originalMargin;
